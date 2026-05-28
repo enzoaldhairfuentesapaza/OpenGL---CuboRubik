@@ -4,7 +4,7 @@ El programa permite visualizar y manipular un cubo rubik mediante controles de t
 
 ---
 
-## 📸 Características
+## Características
 
 - Renderizado 3D usando OpenGL
 - Interacción en tiempo real
@@ -15,17 +15,16 @@ El programa permite visualizar y manipular un cubo rubik mediante controles de t
 
 ---
 
-## 🛠 Tecnologías utilizadas
+## Tecnologías utilizadas
 
 - C++
 - OpenGL
 - GLUT / FreeGLUT
-- GLEW (opcional)
-- GLFW (si aplica)
+- GLFW 
 
 ---
 
-## 🚀 Instalación
+## Instalación
 
 ### Requisitos
 
@@ -34,11 +33,10 @@ Antes de ejecutar el proyecto asegúrate de tener instalado:
 - Compilador C++
 - OpenGL
 - FreeGLUT o GLFW
-- CMake (opcional)
 
 ---
 
-## ▶️ Compilación
+## Compilación
 
 ### Linux
 
