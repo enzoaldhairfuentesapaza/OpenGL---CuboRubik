@@ -11,12 +11,7 @@
 const int WIDTH  = 1000;
 const int HEIGHT = 800;
 
-void framebuffer_size_callback
-(
-    GLFWwindow* window,
-    int width,
-    int height
-)
+void framebuffer_size_callback(GLFWwindow* window,int width,int height)
 {
     glViewport(0,0,width,height);
 }
@@ -48,11 +43,7 @@ Matrix4 identityMatrix()
     return result;
 }
 
-Matrix4 multiplyMatrix
-(
-    Matrix4 a,
-    Matrix4 b
-)
+Matrix4 multiplyMatrix(Matrix4 a, Matrix4 b)
 {
     Matrix4 result;
 
@@ -71,12 +62,7 @@ Matrix4 multiplyMatrix
     return result;
 }
 
-Matrix4 translationMatrix
-(
-    float x,
-    float y,
-    float z
-)
+Matrix4 translationMatrix (float x,float y,float z)
 {
     Matrix4 result = identityMatrix();
 
@@ -91,10 +77,10 @@ Matrix4 rotationXMatrix(float angle)
 {
     Matrix4 result = identityMatrix();
 
-    result.m[5]  = cos(angle);
-    result.m[6]  = sin(angle);
+    result.m[5] = cos(angle);
+    result.m[6] = sin(angle);
 
-    result.m[9]  = -sin(angle);
+    result.m[9] = -sin(angle);
     result.m[10] = cos(angle);
 
     return result;
@@ -104,43 +90,39 @@ Matrix4 rotationYMatrix(float angle)
 {
     Matrix4 result = identityMatrix();
 
-    result.m[0]  = cos(angle);
-    result.m[2]  = -sin(angle);
+    result.m[0] = cos(angle);
+    result.m[2] = -sin(angle);
 
-    result.m[8]  = sin(angle);
+    result.m[8] = sin(angle);
     result.m[10] = cos(angle);
 
     return result;
 }
 
-Matrix4 perspectiveMatrix
-(
-    float fov,
-    float aspect,
-    float nearPlane,
-    float farPlane
-)
+Matrix4 rotationZMatrix(float angle)
+{
+    Matrix4 result = identityMatrix();
+
+    result.m[0]  = cos(angle);
+    result.m[1]  = sin(angle);
+
+    result.m[4]  = -sin(angle);
+    result.m[5]  = cos(angle);
+
+    return result;
+}
+
+Matrix4 perspectiveMatrix(float fov,float aspect,float nearPlane,float farPlane)
 {
     Matrix4 result;
 
-    float tanHalfFov =
-        tan(fov / 2.0f);
+    float tanHalfFov = tan(fov / 2.0f);
 
-    result.m[0] =
-        1.0f / (aspect * tanHalfFov);
-
-    result.m[5] =
-        1.0f / tanHalfFov;
-
-    result.m[10] =
-        -(farPlane + nearPlane) /
-        (farPlane - nearPlane);
-
+    result.m[0] = 1.0f / (aspect * tanHalfFov);
+    result.m[5] = 1.0f / tanHalfFov;
+    result.m[10] = -(farPlane + nearPlane) / (farPlane - nearPlane);
     result.m[11] = -1.0f;
-
-    result.m[14] =
-        -(2.0f * farPlane * nearPlane) /
-        (farPlane - nearPlane);
+    result.m[14] = -(2.0f * farPlane * nearPlane) /(farPlane - nearPlane);
 
     return result;
 }
@@ -177,40 +159,19 @@ const char *fragmentShaderSource =
 
 unsigned int createShader()
 {
-    unsigned int vertexShader =
-        glCreateShader(GL_VERTEX_SHADER);
-
-    glShaderSource
-    (
-        vertexShader,
-        1,
-        &vertexShaderSource,
-        NULL
-    );
-
+    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
     glCompileShader(vertexShader);
-
-    unsigned int fragmentShader =
-        glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource
-    (
-        fragmentShader,
-        1,
-        &fragmentShaderSource,
-        NULL
-    );
-
+    
+	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
     glCompileShader(fragmentShader);
-
-    unsigned int shaderProgram =
-        glCreateProgram();
+    
+	unsigned int shaderProgram = glCreateProgram();
 
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
-
     glLinkProgram(shaderProgram);
-
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -245,12 +206,7 @@ public:
         b = 0.0f;
     }
 
-    void setColor
-    (
-        float red,
-        float green,
-        float blue
-    )
+    void setColor(float red,float green,float blue)
     {
         r = red;
         g = green;
@@ -265,26 +221,28 @@ private:
     unsigned int VAO;
     unsigned int VBO;
 
-    float posX;
-    float posY;
-    float posZ;
-
     std::vector<float> vertices;
 
     FaceData faces[6];
 
 public:
 
+    int ix;
+    int iy;
+    int iz;
+
+    Matrix4 orientation;
     Cube()
     {
-        posX = 0;
-        posY = 0;
-        posZ = 0;
+        ix = 0;
+        iy = 0;
+        iz = 0;
+        orientation = identityMatrix();
 
         setupVertices();
         setupFaces();
         setupMesh();
-		
+
         for(int i = 0; i < 6; i++)
         {
             faces[i].setColor(0.5f,0.5f,0.5f);
@@ -296,16 +254,11 @@ public:
         return faces[face];
     }
 
-    void setPosition
-    (
-        float x,
-        float y,
-        float z
-    )
+    void setLogicalPosition (int x,int y,int z)
     {
-        posX = x;
-        posY = y;
-        posZ = z;
+        ix = x;
+        iy = y;
+        iz = z;
     }
 
     void setupVertices()
@@ -417,134 +370,45 @@ public:
         glGenBuffers(1, &VBO);
 
         glBindVertexArray(VAO);
-
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-        glBufferData
-        (
-            GL_ARRAY_BUFFER,
-            vertices.size() * sizeof(float),
-            vertices.data(),
-            GL_STATIC_DRAW
-        );
-
-        glVertexAttribPointer
-        (
-            0,
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            3 * sizeof(float),
-            (void*)0
-        );
+        glBufferData(GL_ARRAY_BUFFER,vertices.size() * sizeof(float),vertices.data(),GL_STATIC_DRAW);
+        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3 * sizeof(float),(void*)0);
 
         glEnableVertexAttribArray(0);
-
         glBindVertexArray(0);
     }
 
 
-    void drawFace
-    (
-        unsigned int shader,
-        Face face
-    )
+    void drawFace(unsigned int shader,Face face,Matrix4 model)
     {
-        Matrix4 model =
-            translationMatrix
-            (
-                posX,
-                posY,
-                posZ
-            );
-
-        glUniformMatrix4fv
-        (
-            glGetUniformLocation(shader, "model"),
-            1,
-            GL_FALSE,
-            model.m
-        );
-
-        glUniform3f
-        (
-            glGetUniformLocation(shader, "faceColor"),
-            faces[face].r,
-            faces[face].g,
-            faces[face].b
-        );
+        glUniformMatrix4fv(glGetUniformLocation(shader, "model"),1,GL_FALSE,model.m);
+        glUniform3f(glGetUniformLocation(shader, "faceColor"),faces[face].r,faces[face].g,faces[face].b);
 
         glBindVertexArray(VAO);
-
         unsigned int EBO;
-
         glGenBuffers(1, &EBO);
 
-        glBindBuffer
-        (
-            GL_ELEMENT_ARRAY_BUFFER,
-            EBO
-        );
-
-        glBufferData
-        (
-            GL_ELEMENT_ARRAY_BUFFER,
-            faces[face].triangles.size()
-            * sizeof(unsigned int),
-
-            faces[face].triangles.data(),
-
-            GL_STATIC_DRAW
-        );
-
-        glDrawElements
-        (
-            GL_TRIANGLES,
-            faces[face].triangles.size(),
-            GL_UNSIGNED_INT,
-            0
-        );
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,faces[face].triangles.size()* sizeof(unsigned int),faces[face].triangles.data(),GL_STATIC_DRAW);
+        glDrawElements(GL_TRIANGLES,faces[face].triangles.size(),GL_UNSIGNED_INT,0);
 
         glLineWidth(2.0f);
 
-        glUniform3f
-        (
-            glGetUniformLocation(shader, "faceColor"),
-            0,
-            0,
-            0
-        );
+        glUniform3f(glGetUniformLocation(shader, "faceColor"),0,0,0);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,faces[face].lines.size()* sizeof(unsigned int),faces[face].lines.data(),GL_STATIC_DRAW);
 
-        glBufferData
-        (
-            GL_ELEMENT_ARRAY_BUFFER,
-            faces[face].lines.size()
-            * sizeof(unsigned int),
-
-            faces[face].lines.data(),
-
-            GL_STATIC_DRAW
-        );
-
-        glDrawElements
-        (
-            GL_LINES,
-            faces[face].lines.size(),
-            GL_UNSIGNED_INT,
-            0
-        );
-
+        glDrawElements(GL_LINES,faces[face].lines.size(),GL_UNSIGNED_INT,0);
         glDeleteBuffers(1, &EBO);
     }
 
-    void draw(unsigned int shader)
+    void draw(unsigned int shader, Matrix4 model)
     {
-        drawFace(shader, FRONT);
-        drawFace(shader, BACK);
-        drawFace(shader, LEFT);
-        drawFace(shader, RIGHT);
-        drawFace(shader, TOP);
-        drawFace(shader, BOTTOM);
+        drawFace(shader, FRONT, model);
+        drawFace(shader, BACK, model);
+        drawFace(shader, LEFT, model);
+        drawFace(shader, RIGHT, model);
+        drawFace(shader, TOP, model);
+        drawFace(shader, BOTTOM, model);
     }
 };
 
@@ -554,11 +418,31 @@ class RubikCube
 private:
 
     std::vector<Cube*> cubes;
+    int activeAxis;    // 0 = x, 1 = y, 2 = z, -1 = ninguna
+    int activeSlice;   // -1, 0, 1
+    float layerAngle;
+    int layerDir;      // 1 o -1 sentido de rotacion
+    int activeKey; 
+
+    float rotationSpeed; 
+
+    static const int LAYER_COUNT = 9;
+    int layerKeys[LAYER_COUNT];
+    int layerAxes[LAYER_COUNT];
+    int layerSlices[LAYER_COUNT];
 
 public:
 
     RubikCube()
     {
+        activeAxis = -1;
+        activeSlice = 0;
+        layerAngle = 0.0f;
+        layerDir = 1;
+        activeKey = 0;
+        rotationSpeed = 3.0f;
+
+        setupLayerKeys();
         generate();
     }
 
@@ -570,6 +454,20 @@ public:
         }
     }
 
+    void setupLayerKeys()
+    {
+        layerKeys[0] = GLFW_KEY_U; layerAxes[0] = 1; layerSlices[0] = 1;  
+        layerKeys[1] = GLFW_KEY_J; layerAxes[1] = 1; layerSlices[1] = -1; 
+        layerKeys[2] = GLFW_KEY_H; layerAxes[2] = 0; layerSlices[2] = -1; 
+        layerKeys[3] = GLFW_KEY_K; layerAxes[3] = 0; layerSlices[3] = 1;   
+        layerKeys[4] = GLFW_KEY_F; layerAxes[4] = 2; layerSlices[4] = 1;  
+        layerKeys[5] = GLFW_KEY_B; layerAxes[5] = 2; layerSlices[5] = -1; 
+		
+        layerKeys[6] = GLFW_KEY_M; layerAxes[6] = 0; layerSlices[6] = 0;  
+        layerKeys[7] = GLFW_KEY_N; layerAxes[7] = 1; layerSlices[7] = 0;  
+        layerKeys[8] = GLFW_KEY_V; layerAxes[8] = 2; layerSlices[8] = 0;  
+    }
+
     void generate()
     {
         for(int x = -1; x <= 1; x++)
@@ -578,17 +476,12 @@ public:
             {
                 for(int z = -1; z <= 1; z++)
                 {
-					if (x == 0 && y == 0 && z == 0) 
-					{
-						continue;
-					}
+                    if (x == 0 && y == 0 && z == 0)
+                    {
+                        continue;
+                    }
                     Cube* cube = new Cube();
-                    cube->setPosition
-                    (
-                        x * 1.5f,
-                        y * 1.5f,
-                        z * 1.5f
-                    );
+                    cube->setLogicalPosition(x, y, z);
 
                     if(z == 1)
                     {
@@ -626,11 +519,138 @@ public:
         }
     }
 
+    bool isInActiveLayer(Cube* c)
+    {
+        if (activeAxis == 0) return c->ix == activeSlice;
+        if (activeAxis == 1) return c->iy == activeSlice;
+        if (activeAxis == 2) return c->iz == activeSlice;
+        return false;
+    }
+
+    Matrix4 axisRotationMatrix(int axis, float angle)
+    {
+        if (axis == 0) return rotationXMatrix(angle);
+        if (axis == 1) return rotationYMatrix(angle);
+        if (axis == 2) return rotationZMatrix(angle);
+        return identityMatrix();
+    }
+
+    void rotateLogicalPositionsOnce(int axis)
+    {
+        for (Cube* c : cubes)
+        {
+            if (!isInActiveLayer(c)) continue;
+
+            int x = c->ix;
+            int y = c->iy;
+            int z = c->iz;
+
+            if (axis == 0)
+            {
+                // rotacion x (x,y,z) -> (x,-z,y)
+                c->ix = x;
+                c->iy = -z;
+                c->iz = y;
+            }
+            else if (axis == 1)
+            {
+                // rotacion de y (x,y,z) -> (z,y,-x)
+                c->ix = z;
+                c->iy = y;
+                c->iz = -x;
+            }
+            else if (axis == 2)
+            {
+                // rotacion de z (x,y,z) -> (-y,x,z)
+                c->ix = -y;
+                c->iy = x;
+                c->iz = z;
+            }
+        }
+    }
+
+    void consolidate()
+    {
+        float quarter = 3.14159265f / 2.0f;
+        int turns = (int)floorf(layerAngle / quarter + 0.5f);
+        float snapped = turns * quarter;
+
+        if (turns != 0)
+        {
+            Matrix4 layerRot = axisRotationMatrix(activeAxis, snapped);
+            for (Cube* c : cubes)
+            {
+                if (!isInActiveLayer(c)) continue;
+                c->orientation = multiplyMatrix(c->orientation, layerRot);
+            }
+            int positive = ((turns % 4) + 4) % 4;
+            for (int i = 0; i < positive; i++)
+            {
+                rotateLogicalPositionsOnce(activeAxis);
+            }
+        }
+
+        activeAxis = -1;
+        activeSlice = 0;
+        layerAngle = 0.0f;
+        activeKey = 0;
+    }
+
+    void update(GLFWwindow* window, float deltaTime)
+    {
+        if (activeAxis == -1)
+        {
+            bool shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+
+            for (int i = 0; i < LAYER_COUNT; i++)
+            {
+                if (glfwGetKey(window, layerKeys[i]) == GLFW_PRESS)
+                {
+                    activeAxis = layerAxes[i];
+                    activeSlice = layerSlices[i];
+                    activeKey = layerKeys[i];
+                    layerAngle = 0.0f;
+                    layerDir = shift ? -1 : 1;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            if (glfwGetKey(window, activeKey) == GLFW_PRESS)
+            {
+                layerAngle += layerDir * rotationSpeed * deltaTime;
+            }
+            else
+            {
+                consolidate();
+            }
+        }
+    }
+
     void draw(unsigned int shader)
     {
-        for(Cube* cube : cubes)
+        Matrix4 layerRot = identityMatrix();
+        if (activeAxis != -1)
         {
-            cube->draw(shader);
+            layerRot = axisRotationMatrix(activeAxis, layerAngle);
+        }
+
+        for (Cube* c : cubes)
+        {
+            Matrix4 trans = translationMatrix
+            (
+                c->ix * 0.92f,
+                c->iy * 0.92f,
+                c->iz * 0.92f
+            );
+            Matrix4 temp = multiplyMatrix(c->orientation, trans);
+            Matrix4 model = temp;
+            if (isInActiveLayer(c))
+            {
+                model = multiplyMatrix(temp, layerRot);
+            }
+            c->draw(shader, model);
         }
     }
 };
@@ -638,164 +658,74 @@ public:
 int main()
 {
     glfwInit();
-
-    glfwWindowHint
-    (
-        GLFW_CONTEXT_VERSION_MAJOR,
-        3
-    );
-
-    glfwWindowHint
-    (
-        GLFW_CONTEXT_VERSION_MINOR,
-        3
-    );
-
-    glfwWindowHint
-    (
-        GLFW_OPENGL_PROFILE,
-        GLFW_OPENGL_CORE_PROFILE
-    );
-
-    GLFWwindow* window =
-        glfwCreateWindow(
-            WIDTH,
-            HEIGHT,
-            "Cubo Rubik",
-            NULL,
-            NULL
-        );
-
+    glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR,3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
+    GLFWwindow* window = glfwCreateWindow(WIDTH,HEIGHT,"Cubo Rubik - Modelado - Camadas",NULL,NULL);
     glfwMakeContextCurrent(window);
-
-    glfwSetFramebufferSizeCallback
-    (
-        window,
-        framebuffer_size_callback
-    );
-
+    glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
     gladLoadGL(glfwGetProcAddress);
-
     glEnable(GL_DEPTH_TEST);
 
-    unsigned int shader =
-        createShader();
+    unsigned int shader = createShader();
 
     RubikCube rubik;
 
     float cameraZ = -10.0f;
-
     float rotX = 0.3f;
     float rotY = 0.7f;
 
     float moveSpeed = 0.05f;
+    Matrix4 projection = perspectiveMatrix (45.0f * 3.14159f / 180.0f, (float)WIDTH / HEIGHT, 0.1f, 100.0f);
 
-    Matrix4 projection =
-        perspectiveMatrix
-        (
-            45.0f * 3.14159f / 180.0f,
-            (float)WIDTH / HEIGHT,
-            0.1f,
-            100.0f
-        );
-		
+    float lastTime = (float)glfwGetTime();
     while(!glfwWindowShouldClose(window))
     {
+        float currentTime = (float)glfwGetTime();
+        float deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+
+        rubik.update(window, deltaTime);
+
         if(glfwGetKey(window, GLFW_KEY_A))
         {
             rotY += moveSpeed;
         }
-
         if(glfwGetKey(window, GLFW_KEY_D))
         {
             rotY -= moveSpeed;
         }
-
         if(glfwGetKey(window, GLFW_KEY_W))
         {
             rotX += moveSpeed;
         }
-
         if(glfwGetKey(window, GLFW_KEY_S))
         {
             rotX -= moveSpeed;
         }
-
         if(glfwGetKey(window, GLFW_KEY_Q))
         {
             cameraZ += 0.05f;
         }
-
         if(glfwGetKey(window, GLFW_KEY_E))
         {
             cameraZ -= 0.05f;
         }
-
-        glClearColor
-        (
-            0.1f,
-            0.1f,
-            0.1f,
-            1.0f
-        );
-
-        glClear
-        (
-            GL_COLOR_BUFFER_BIT |
-            GL_DEPTH_BUFFER_BIT
-        );
-
+        glClearColor(0.1f,0.1f,0.1f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(shader);
 
+        Matrix4 translation = translationMatrix (0,0,cameraZ);
+        Matrix4 rotationX = rotationXMatrix(rotX);
+        Matrix4 rotationY = rotationYMatrix(rotY);
+        Matrix4 rotation = multiplyMatrix(rotationY,rotationX);
+        Matrix4 view = multiplyMatrix(rotation,translation);
 
-        Matrix4 translation =
-            translationMatrix
-            (
-                0,
-                0,
-                cameraZ
-            );
-
-        Matrix4 rotationX =
-            rotationXMatrix(rotX);
-
-        Matrix4 rotationY =
-            rotationYMatrix(rotY);
-
-        Matrix4 rotation =
-            multiplyMatrix
-            (
-                rotationY,
-                rotationX
-            );
-
-        Matrix4 view =
-            multiplyMatrix
-            (
-                rotation,
-                translation
-            );
-
-        glUniformMatrix4fv
-        (
-            glGetUniformLocation(shader, "view"),
-            1,
-            GL_FALSE,
-            view.m
-        );
-
-        glUniformMatrix4fv
-        (
-            glGetUniformLocation(shader, "projection"),
-            1,
-            GL_FALSE,
-            projection.m
-        );
+        glUniformMatrix4fv(glGetUniformLocation(shader, "view"),1,GL_FALSE,view.m);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "projection"),1,GL_FALSE,projection.m);
 
         rubik.draw(shader);
-
         glfwSwapBuffers(window);
-
         glfwPollEvents();
     }
 
